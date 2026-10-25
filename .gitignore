@@ -1,0 +1,12 @@
+# OS
+Thumbs.db
+Desktop.ini
+
+# Editor
+.vscode/
+.idea/
+*.iml
+
+# Build / temp
+*.dds
+*.tmp
