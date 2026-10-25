@@ -73,6 +73,7 @@ Time Flow lets you adjust the day/night cycle and season progression, so you can
 [*]Server-side mod — all clients should install it
 [*]Only single-player (local online world) has been tested; multiplayer has not been tested
 [*]No full compatibility test with other mods; no issues observed with the author's own common mod set
+[*]Started as a personal mod: I'm new to the game and build slowly, and wanted to take my time on the base layout without the clock constantly running
 [/list]
 
 [hr][/hr]
@@ -97,6 +98,7 @@ Time Flow 可以调节昼夜与季节的流逝速度，让你安心建家，不�
 [*]服务器端模组，建议所有客户端安装
 [*]仅测试了单人（本地在线世界），未测试联机效果
 [*]未做完整的模组兼容性测试；作者自用的一些通用模组下暂未遇到问题
+[*]最初是自用：刚接触游戏，建基地很慢，又有强迫症想认真调整布局，时间一直走很困扰，所以做了这个 mod
 [/list]
 ```
 
