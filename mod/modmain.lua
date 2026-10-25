@@ -80,12 +80,27 @@ AddComponentPostInit("perishable", function(self)
     end
 end)
 
+-- 存活天数用的是 GetTime()，需要单独暂停，否则和右上角时钟对不上
+local function set_aging_paused(paused)
+    for _, player in ipairs(AllPlayers) do
+        local age = player.components.age
+        if age then
+            if paused then
+                age:PauseAging()
+            else
+                age:ResumeAging()
+            end
+        end
+    end
+end
+
 -- 服务器 RPC
 AddModRPCHandler(MODNAME, "SetTimeScale", function(player, val)
     if not TheWorld.ismastersim then
         return
     end
     time_scale = tonumber(val) or 1
+    set_aging_paused(time_scale == 0)
     local L = TEXT[current_locale()]
     Notify(player, time_scale == 0
         and L.say_pause
