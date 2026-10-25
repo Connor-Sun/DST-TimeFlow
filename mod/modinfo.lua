@@ -50,4 +50,22 @@ configuration_options = {
         },
         default = "KEY_F7",
     },
+    {
+        name = "panel_permission",
+        label = is_s and "谁可以调整"
+            or (is_t and "誰可以調整" or "Who can adjust"),
+        options = {
+            {
+                description = is_s and "仅管理员/房主"
+                    or (is_t and "僅管理員/房主" or "Admin / host only"),
+                data = "admin",
+            },
+            {
+                description = is_s and "所有人"
+                    or (is_t and "所有人" or "Everyone"),
+                data = "everyone",
+            },
+        },
+        default = "admin",
+    },
 }

@@ -15,10 +15,12 @@ local TEXT = {
         close = "Close",
         pause = "Pause",
         no_rot = "No Rot",
-        say_pause = "I paused time. Take a break.",
-        say_time = "I set time speed to %s.",
-        say_rot_off = "I turned off food spoilage.",
-        say_rot = "I set food spoilage to %s.",
+        cancel = "Cancel",
+        apply = "Apply",
+        say_apply = "Time: %s, rot: %s.",
+        time_paused = "paused",
+        rot_off = "off",
+        no_permission = "Only admins can change time settings.",
     },
     zh = {
         title = "时间流速控制",
@@ -27,10 +29,12 @@ local TEXT = {
         close = "关闭",
         pause = "暂停",
         no_rot = "不烂",
-        say_pause = "我把时间暂停了，大家先歇会儿。",
-        say_time = "我把时间流速调到 %s 倍了。",
-        say_rot_off = "我把食物腐烂关掉了，放心囤。",
-        say_rot = "我把腐烂速度调到 %s 倍了。",
+        cancel = "取消",
+        apply = "应用",
+        say_apply = "时间流速：%s，腐烂速度：%s。",
+        time_paused = "暂停",
+        rot_off = "关闭",
+        no_permission = "只有管理员可以调整时间设置。",
     },
     zht = {
         title = "時間流速控制",
@@ -39,10 +43,12 @@ local TEXT = {
         close = "關閉",
         pause = "暫停",
         no_rot = "不爛",
-        say_pause = "我把時間暫停了，大家先歇會兒。",
-        say_time = "我把時間流速調到 %s 倍了。",
-        say_rot_off = "我把食物腐爛關掉了，放心囤。",
-        say_rot = "我把腐爛速度調到 %s 倍了。",
+        cancel = "取消",
+        apply = "應用",
+        say_apply = "時間流速：%s，腐爛速度：%s。",
+        time_paused = "暫停",
+        rot_off = "關閉",
+        no_permission = "只有管理員可以調整時間設定。",
     },
 }
 
@@ -94,33 +100,38 @@ local function set_aging_paused(paused)
     end
 end
 
--- 服务器 RPC
-AddModRPCHandler(MODNAME, "SetTimeScale", function(player, val)
-    if not TheWorld.ismastersim then
-        return
+local function can_control(player)
+    if GetModConfigData("panel_permission") == "everyone" then
+        return true
     end
-    time_scale = tonumber(val) or 1
-    set_aging_paused(time_scale == 0)
-    local L = TEXT[current_locale()]
-    Notify(player, time_scale == 0
-        and L.say_pause
-        or string.format(L.say_time, fmt_num(time_scale)))
-end)
+    return player ~= nil
+        and player.Network ~= nil
+        and player.Network:IsServerAdmin()
+end
 
-AddModRPCHandler(MODNAME, "SetPerish", function(player, val)
+-- 服务器 RPC：一次应用时间和腐烂，只提示一条
+AddModRPCHandler(MODNAME, "Apply", function(player, time, perish)
     if not TheWorld.ismastersim then
         return
     end
-    perish_mult = tonumber(val) or 1
+    if not can_control(player) then
+        return
+    end
+
+    time_scale = tonumber(time) or 1
+    perish_mult = tonumber(perish) or 1
+
+    set_aging_paused(time_scale == 0)
     for _, ent in pairs(Ents) do
         if ent.components.perishable then
             ent.components.perishable:SetLocalMultiplier(perish_mult)
         end
     end
+
     local L = TEXT[current_locale()]
-    Notify(player, perish_mult == 0
-        and L.say_rot_off
-        or string.format(L.say_rot, fmt_num(perish_mult)))
+    local t = time_scale == 0 and L.time_paused or (fmt_num(time_scale) .. "x")
+    local p = perish_mult == 0 and L.rot_off or (fmt_num(perish_mult) .. "x")
+    Notify(player, string.format(L.say_apply, t, p))
 end)
 
 -- 按倍率推进昼夜与季节；0 = 暂停
@@ -152,31 +163,49 @@ if not TheNet:IsDedicated() then
     local PausePanel = GLOBAL.PausePanel
     local key_registered = false
     local was_paused_before_panel = false
+    local panel_paused_server = false
+
+    local function client_can_control()
+        if GetModConfigData("panel_permission") == "everyone" then
+            return true
+        end
+        return TheNet:GetIsServerAdmin() or TheNet:GetServerIsClientHosted()
+    end
 
     AddClassPostConstruct("screens/playerhud", function(self)
         print("TimeFlow: HUD postinit locale=" .. current_locale())
 
         self.pausepanel = self:AddChild(PausePanel(nil, {
-            on_set_time = function(v)
-                client_time_scale = v
-                SendModRPCToServer(MOD_RPC[MODNAME]["SetTimeScale"], v)
-            end,
-            on_set_perish = function(v)
-                client_perish = v
-                SendModRPCToServer(MOD_RPC[MODNAME]["SetPerish"], v)
+            can_apply = client_can_control,
+            on_apply = function(time, perish)
+                if not client_can_control() then
+                    return
+                end
+                client_time_scale = time
+                client_perish = perish
+                SendModRPCToServer(MOD_RPC[MODNAME]["Apply"], time, perish)
+                local hud = ThePlayer and ThePlayer.HUD
+                if hud and hud.pausepanel then
+                    hud.pausepanel:Toggle()
+                end
             end,
             get_state = function()
                 return { time = client_time_scale, perish = client_perish }
             end,
             on_open = function()
                 was_paused_before_panel = TheNet:IsServerPaused()
-                if not was_paused_before_panel then
+                panel_paused_server = false
+                if TheNet:GetServerIsClientHosted()
+                    and #GetPlayerClientTable() == 1
+                    and not was_paused_before_panel then
                     SetServerPaused(true)
+                    panel_paused_server = true
                 end
             end,
             on_close = function()
-                if not was_paused_before_panel then
+                if panel_paused_server then
                     SetServerPaused(false)
+                    panel_paused_server = false
                 end
             end,
         }, TEXT[current_locale()]))
@@ -187,9 +216,10 @@ if not TheNet:IsDedicated() then
             key_registered = true
             TheInput:AddKeyUpHandler(panel_key, function()
                 local hud = ThePlayer and ThePlayer.HUD
-                if hud and hud.pausepanel then
-                    hud.pausepanel:Toggle()
+                if not (hud and hud.pausepanel) then
+                    return
                 end
+                hud.pausepanel:Toggle()
             end)
             print("TimeFlow: " .. panel_key_name .. " registered")
         end
