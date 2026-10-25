@@ -71,8 +71,8 @@ Time Flow lets you adjust the day/night cycle and season progression, so you can
 [h2]Notes[/h2]
 [list]
 [*]Server-side mod — all clients should install it
-[*]Works in both single-player and together
-[*]Compatible with other UI mods; no known conflicts
+[*]Only single-player (local online world) has been tested; multiplayer has not been tested
+[*]No full compatibility test with other mods; no issues observed with the author's own common mod set
 [/list]
 
 [hr][/hr]
@@ -95,8 +95,8 @@ Time Flow 可以调节昼夜与季节的流逝速度，让你安心建家，不�
 [h2]注意[/h2]
 [list]
 [*]服务器端模组，建议所有客户端安装
-[*]支持单人和联机
-[*]与其他 UI 模组兼容，暂无已知冲突
+[*]仅测试了单人（本地在线世界），未测试联机效果
+[*]未做完整的模组兼容性测试；作者自用的一些通用模组下暂未遇到问题
 [/list]
 ```
 
