@@ -7,9 +7,6 @@ local perish_mult = 1
 local panel_key_name = GetModConfigData("panel_key") or "KEY_F7"
 local panel_key = GLOBAL[panel_key_name] or KEY_F7
 
-local LOCALE = (locale == "zh" or locale == "zhr") and "zh"
-    or (locale == "zht" and "zht" or "en")
-
 local TEXT = {
     en = {
         title = "Time Flow",
@@ -49,7 +46,15 @@ local TEXT = {
     },
 }
 
-local L = TEXT[LOCALE]
+local function current_locale()
+    local code = (LOC and LOC.GetLocaleCode and LOC.GetLocaleCode()) or locale or "en"
+    if code == "zh" or code == "zhr" then
+        return "zh"
+    elseif code == "zht" then
+        return "zht"
+    end
+    return "en"
+end
 
 -- 客户端本地状态（面板显示用）
 local client_time_scale = 1
@@ -81,6 +86,7 @@ AddModRPCHandler(MODNAME, "SetTimeScale", function(player, val)
         return
     end
     time_scale = tonumber(val) or 1
+    local L = TEXT[current_locale()]
     Notify(player, time_scale == 0
         and L.say_pause
         or string.format(L.say_time, fmt_num(time_scale)))
@@ -96,6 +102,7 @@ AddModRPCHandler(MODNAME, "SetPerish", function(player, val)
             ent.components.perishable:SetLocalMultiplier(perish_mult)
         end
     end
+    local L = TEXT[current_locale()]
     Notify(player, perish_mult == 0
         and L.say_rot_off
         or string.format(L.say_rot, fmt_num(perish_mult)))
@@ -132,7 +139,7 @@ if not TheNet:IsDedicated() then
     local was_paused_before_panel = false
 
     AddClassPostConstruct("screens/playerhud", function(self)
-        print("TimeFlow: HUD postinit")
+        print("TimeFlow: HUD postinit locale=" .. current_locale())
 
         self.pausepanel = self:AddChild(PausePanel(nil, {
             on_set_time = function(v)
@@ -157,7 +164,7 @@ if not TheNet:IsDedicated() then
                     SetServerPaused(false)
                 end
             end,
-        }, L))
+        }, TEXT[current_locale()]))
         self.pausepanel:Hide()
         print("TimeFlow: panel created")
 
