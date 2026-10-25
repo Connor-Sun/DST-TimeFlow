@@ -35,7 +35,7 @@ TimeFlow/
 ```powershell
 New-Item -ItemType Junction `
   -Path "D:\Games\SteamLibrary\steamapps\common\Don't Starve Together\mods\TimeFlow" `
-  -Target "D:\Games\Mods\DST\TimeFlow\mod"
+  -Target "D:\Games\Mods\DST\DST-TimeFlow\mod"
 ```
 
 进游戏后在「模组 → 本地模组」启用。
