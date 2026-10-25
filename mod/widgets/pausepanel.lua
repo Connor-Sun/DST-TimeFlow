@@ -1,5 +1,4 @@
 local Widget = require("widgets/widget")
-local Text = require("widgets/text")
 local TEMPLATES = require("widgets/redux/templates")
 
 local LABEL_W = 300
@@ -26,9 +25,8 @@ local function make_row(parent, label, options, y, onchanged)
     return row
 end
 
-local PausePanel = Class(Widget, function(self, owner, callbacks, texts)
+local PausePanel = Class(Widget, function(self, callbacks, texts)
     Widget._ctor(self, "PausePanel")
-    self.owner = owner
     self.callbacks = callbacks or {}
     local T = texts or {}
 

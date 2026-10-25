@@ -20,7 +20,7 @@ local desc_t = "時間與腐爛調節面板。\n\n"
 name = "Time Flow"
 description = is_s and desc_s or (is_t and desc_t or desc_en)
 author = "Connor"
-version = "0.3.0"
+version = "0.4.0"
 
 api_version = 10
 api_version_dst = 10

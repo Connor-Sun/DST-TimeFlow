@@ -63,9 +63,10 @@ Time Flow lets you adjust the day/night cycle and season progression, so you can
 [*][b]Time speed[/b]: Pause / 0.5x / 0.75x / 1x / 1.5x / 2x
 [*][b]Rot speed[/b]: No Rot / 0.1x / 0.25x / 0.5x / 0.75x / 1x
 [*]Open the panel with [b]F7[/b] (configurable in mod settings)
-[*]Opening the panel automatically pauses the game, closing resumes it
+[*]Opening the panel auto-pauses in single-player; multiplayer keeps running
 [*]Only day/night and seasons are affected — players, creatures and building are untouched
-[*]Changes are announced to other players through character speech
+[*]Admins/hosts can adjust; everyone can view the current settings
+[*]Changes are announced to all players
 [/list]
 
 [h2]Notes[/h2]
@@ -88,9 +89,10 @@ Time Flow 可以调节昼夜与季节的流逝速度，让你安心建家，不�
 [*][b]时间流速[/b]：暂停 / 0.5x / 0.75x / 1x / 1.5x / 2x
 [*][b]腐烂速度[/b]：不烂 / 0.1x / 0.25x / 0.5x / 0.75x / 1x
 [*]按 [b]F7[/b] 打开面板（可在模组配置中修改）
-[*]打开面板时自动暂停，关闭后恢复
+[*]单人时打开面板自动暂停，多人不暂停
 [*]只影响昼夜与季节，玩家、生物和建造不受影响
-[*]设置变更会通过角色说话通知其他玩家
+[*]管理员/房主可以调整，所有人可以查看当前设置
+[*]应用设置时会向全服广播
 [/list]
 
 [h2]说明[/h2]

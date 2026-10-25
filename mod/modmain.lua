@@ -12,43 +12,37 @@ local TEXT = {
         title = "Time Flow",
         time = "Time Speed",
         perish = "Rot Speed",
-        close = "Close",
         pause = "Pause",
         no_rot = "No Rot",
         cancel = "Cancel",
         apply = "Apply",
-        say_apply = "Time: %s, rot: %s.",
+        announce_apply = "%s set time speed to %s, rot speed to %s.",
         time_paused = "paused",
         rot_off = "off",
-        no_permission = "Only admins can change time settings.",
     },
     zh = {
         title = "时间流速控制",
         time = "时间流速",
         perish = "腐烂速度",
-        close = "关闭",
         pause = "暂停",
         no_rot = "不烂",
         cancel = "取消",
         apply = "应用",
-        say_apply = "时间流速：%s，腐烂速度：%s。",
+        announce_apply = "%s 调整了时间流速：%s，腐烂速度：%s。",
         time_paused = "暂停",
         rot_off = "关闭",
-        no_permission = "只有管理员可以调整时间设置。",
     },
     zht = {
         title = "時間流速控制",
         time = "時間流速",
         perish = "腐爛速度",
-        close = "關閉",
         pause = "暫停",
         no_rot = "不爛",
         cancel = "取消",
         apply = "應用",
-        say_apply = "時間流速：%s，腐爛速度：%s。",
+        announce_apply = "%s 調整了時間流速：%s，腐爛速度：%s。",
         time_paused = "暫停",
         rot_off = "關閉",
-        no_permission = "只有管理員可以調整時間設定。",
     },
 }
 
@@ -66,21 +60,31 @@ end
 local client_time_scale = 1
 local client_perish = perish_mult
 
-local function Notify(player, msg)
-    if player and player.components.talker then
-        player.components.talker:Say(msg)
+-- 服务器状态同步给所有客户端
+local net_time
+local net_perish
+AddPrefabPostInit("world", function(inst)
+    net_time = net_float(inst.GUID, "timeflow.time_scale", "timeflowdirty")
+    net_perish = net_float(inst.GUID, "timeflow.perish_mult", "timeflowdirty")
+    if inst.ismastersim then
+        net_time:set(time_scale)
+        net_perish:set(perish_mult)
     end
-end
+end)
 
 local function fmt_num(v)
     if v == math.floor(v) then
         return tostring(math.floor(v))
     end
-    return string.format("%.2f", v):gsub("0+$", ""):gsub("%.$", "")
+    local s = string.format("%.2f", v):gsub("0+$", ""):gsub("%.$", "")
+    return s
 end
 
 -- 食物腐烂倍率（0 = 不腐烂）
 AddComponentPostInit("perishable", function(self)
+    if not TheWorld.ismastersim then
+        return
+    end
     if self.SetLocalMultiplier then
         self:SetLocalMultiplier(perish_mult)
     end
@@ -120,6 +124,8 @@ AddModRPCHandler(MODNAME, "Apply", function(player, time, perish)
 
     time_scale = tonumber(time) or 1
     perish_mult = tonumber(perish) or 1
+    if net_time then net_time:set(time_scale) end
+    if net_perish then net_perish:set(perish_mult) end
 
     set_aging_paused(time_scale == 0)
     for _, ent in pairs(Ents) do
@@ -131,7 +137,8 @@ AddModRPCHandler(MODNAME, "Apply", function(player, time, perish)
     local L = TEXT[current_locale()]
     local t = time_scale == 0 and L.time_paused or (fmt_num(time_scale) .. "x")
     local p = perish_mult == 0 and L.rot_off or (fmt_num(perish_mult) .. "x")
-    Notify(player, string.format(L.say_apply, t, p))
+    local name = player and player:GetDisplayName() or "?"
+    TheNet:Announce(string.format(L.announce_apply, name, t, p))
 end)
 
 -- 按倍率推进昼夜与季节；0 = 暂停
@@ -175,7 +182,7 @@ if not TheNet:IsDedicated() then
     AddClassPostConstruct("screens/playerhud", function(self)
         print("TimeFlow: HUD postinit locale=" .. current_locale())
 
-        self.pausepanel = self:AddChild(PausePanel(nil, {
+        self.pausepanel = self:AddChild(PausePanel({
             can_apply = client_can_control,
             on_apply = function(time, perish)
                 if not client_can_control() then
@@ -190,7 +197,10 @@ if not TheNet:IsDedicated() then
                 end
             end,
             get_state = function()
-                return { time = client_time_scale, perish = client_perish }
+                return {
+                    time = net_time and net_time:value() or client_time_scale,
+                    perish = net_perish and net_perish:value() or client_perish,
+                }
             end,
             on_open = function()
                 was_paused_before_panel = TheNet:IsServerPaused()
